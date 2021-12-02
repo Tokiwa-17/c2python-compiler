@@ -2,8 +2,9 @@ import ply.lex as lex
 from ply.lex import TOKEN
 
 tokens = (
-
+    'ASSIGN',
 )
+
 
 reserved = {
     'auto': 'AUTO',
@@ -40,6 +41,8 @@ reserved = {
     'while': 'WHILE'
 }
 tokens = tokens + tuple(reserved.values())
+
+t_ASSIGN = r'=|\+=|-=|\*=|/=|%=|<<=|>>=|&=|\^=|\|='
 
 def t_newline(t):
     r'\n+'
