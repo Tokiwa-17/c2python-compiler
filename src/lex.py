@@ -52,6 +52,11 @@ tokens = (
     'AND_OP',
     'OR_OP',
     'ASSIGN_OP',  # += , <<=, etc. (not include =)
+    'NO_SIN', # !
+    'RE_SIN', # ~
+    'NE_SIN', # -
+    'PTR_SIN', # *
+    'ADD_SIN', # &
 )
 
 tokens = tokens + tuple(reserved.values())
@@ -93,6 +98,11 @@ t_EQ_NE = r'(==|!=)'
 t_AND_OP = r'&&'
 t_OR_OP = r'\|\|'
 t_ASSIGN_OP = r'(\*=|/=|%=|\+=|-=|&=|\|=|^=|<<=|>>=)'
+t_NO_SIN = r'!'
+t_RE_SIN = r'~'
+t_NE_SIN = r'-'
+t_PTR_SIN = r'\*'
+t_ADD_SIN = r'&'
 
 
 literals = '#;,.?:[](){}<=>+-*/%&|!~^'
