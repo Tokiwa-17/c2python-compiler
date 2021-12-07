@@ -1,3 +1,5 @@
+# -*- coding=utf-8 -*-
+
 import ply.lex as lex
 from ply.lex import TOKEN
 
@@ -120,15 +122,19 @@ def t_newline(t):
 
 
 def t_error(t):
-    print("Illegal character '%s'" % t.value[0])
+    print("[Lex Error] Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
-
-# Compute column.
-#     string is the input text string
-#     token is a token instance
 
 
 def find_column(string, token):
+    '''
+    Compute column
+    
+    Parameters
+    --------
+    + `string` - the input text string
+    + `token` - a lex token instance
+    '''
     last_cr = string.rfind('\n', 0, token.lexpos)
     if last_cr < 0:
         last_cr = 0
