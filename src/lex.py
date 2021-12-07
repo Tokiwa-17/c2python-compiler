@@ -1,3 +1,5 @@
+# -*- coding=utf-8 -*-
+
 import ply.lex as lex
 from ply.lex import TOKEN
 
@@ -52,11 +54,6 @@ tokens = (
     'AND_OP',
     'OR_OP',
     'ASSIGN_OP',  # += , <<=, etc. (not include =)
-    'NO_SIN', # !
-    'RE_SIN', # ~
-    'NE_SIN', # -
-    'PTR_SIN', # *
-    'ADD_SIN', # &
 )
 
 tokens = tokens + tuple(reserved.values())
@@ -98,11 +95,6 @@ t_EQ_NE = r'(==|!=)'
 t_AND_OP = r'&&'
 t_OR_OP = r'\|\|'
 t_ASSIGN_OP = r'(\*=|/=|%=|\+=|-=|&=|\|=|^=|<<=|>>=)'
-t_NO_SIN = r'!'
-t_RE_SIN = r'~'
-t_NE_SIN = r'-'
-t_PTR_SIN = r'\*'
-t_ADD_SIN = r'&'
 
 
 literals = '#;,.?:[](){}<=>+-*/%&|!~^'
@@ -120,15 +112,19 @@ def t_newline(t):
 
 
 def t_error(t):
-    print("Illegal character '%s'" % t.value[0])
+    print("[Lex Error] Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
-
-# Compute column.
-#     string is the input text string
-#     token is a token instance
 
 
 def find_column(string, token):
+    '''
+    Compute column
+    
+    Parameters
+    --------
+    + `string` - the input text string
+    + `token` - a lex token instance
+    '''
     last_cr = string.rfind('\n', 0, token.lexpos)
     if last_cr < 0:
         last_cr = 0
