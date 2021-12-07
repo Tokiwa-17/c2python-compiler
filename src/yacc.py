@@ -1,7 +1,7 @@
 # -*- coding=utf-8 -*-
 
 from lex import tokens
-from ast import *
+from ast_ import *
 import ply.yacc as yacc
 from lex import tokens
 
