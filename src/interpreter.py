@@ -29,7 +29,7 @@ class Interpreter:
             raw_dst_code = self.semantic_process(tree)
             # TODO: format
             dst_code = ''
-            
+
             # ouput
             with open(self.dst_file, 'w+', encoding='utf-8') as f:
                 f.write(dst_code)
