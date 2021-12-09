@@ -12,10 +12,12 @@ def system_0(s):
 
 # gets in C
 gets_py = '''
+
 '''
 
 # printf in C
 printf_py = '''
+
 '''
 
 # strlen in C
@@ -30,4 +32,5 @@ def strlen_0(s):
                 break
             _len += 1
         return _len
+
 '''
