@@ -26,7 +26,7 @@ def precompile(filename):
     remove_line_idx = []
     for idx, line in enumerate(lines):
         line = remove_side_whitespace(line)
-
+        lines[idx] = line
         # if the line is None
         if len(line) <= 0:
             #lines.pop(idx)

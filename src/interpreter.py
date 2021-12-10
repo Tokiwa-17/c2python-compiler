@@ -1,6 +1,6 @@
 from preprocessing import precompile
 from yacc import parser
-from c_utils import c_utils
+#from c_utils import c_utils
 from ast_ import ASTLeafNode, ASTInternalNode
 
 class Interpreter:
@@ -18,11 +18,10 @@ class Interpreter:
         self.declarations = []
         self.variable_table = {}
 
-        # TODO c_utils
-        self.c_functions = ''
-        for c_function in c_utils:
-            self.c_functions += c_function
-        self.c_functions += '\n'
+        # TODO import
+        self.import_c_utils = []
+        self.import_c_utils.append('from cstdio import *')
+        self.import_c_utils.append('from cstring import *')
         self.run_cmd = '''
         if __name__ == '__main__':
             main_0()
@@ -69,7 +68,7 @@ class Interpreter:
         for dec in self.declarations:
             # TODO: function declaration
             self.extract_global_declaration(dec)
-            code, _ = self.generate_code(dec, [], 'declarationi')
+            code, _ = self.generate_code(dec, [], 'declaration')
             new_code.extend(code)
             new_code.append('')
 
@@ -97,21 +96,21 @@ class Interpreter:
 
     def leaf_node_translation(self, tree):
         if tree.value == ';':
-            return ''
+            return ['']
         elif tree.value == '&&':
-            return ' and '
+            return [' and ']
         elif tree.value == '||':
-            return ' or '
+            return [' or ']
         elif tree.value == '!':
-            return ' not '
+            return [' not ']
         elif tree.value == 'true':
-            return 'True'
+            return ['True']
         elif tree.value == 'false':
-            return 'False'
+            return ['False']
         elif tree.value == 'struct':
-            return 'class'
+            return ['class']
         else:
-            return tree.value
+            return [tree.value]
 
     def get_flag(self, tree, flag_list):
         if tree.ttype == 'struct_or_union_specifier':
