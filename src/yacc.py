@@ -3,7 +3,7 @@
 from lex import tokens
 from ast_ import *
 import ply.yacc as yacc
-from lex import tokens
+from lex import tokens, identifier
 
 
 def p_empty(p):
@@ -210,13 +210,26 @@ def p_init_declarator(p):
 
 # 6.7.1
 def p_storage_class_specifier(p):
-    ''' storage_class_specifier : TYPEDEF | EXTERN | STATIC | AUTO | REGISTER '''
+    ''' storage_class_specifier : TYPEDEF
+                                | EXTERN
+                                | STATIC
+                                | AUTO
+                                | REGISTER '''
     p[0] = ASTInternalNode('storage_class_specifier', p[1:])
 
 
 # 6.7.2
 def p_type_specifier(p):
-    ''' type_specifier : VOID | CHAR | SHORT | INT | LONG | FLOAT | DOUBLE | SIGNED | UNSIGNED | BOOL
+    ''' type_specifier : VOID
+                       | CHAR
+                       | SHORT
+                       | INT
+                       | LONG
+                       | FLOAT
+                       | DOUBLE
+                       | SIGNED
+                       | UNSIGNED
+                       | BOOL
                        | struct_or_union_specifier
                        | enum_specifier
                        | typedef_name '''
@@ -233,7 +246,8 @@ def p_struct_or_union_specifier(p):
 
 # 6.7.2.1
 def p_struct_or_union(p):
-    ''' struct_or_union : STRUCT | UNION '''
+    ''' struct_or_union : STRUCT
+                        | UNION '''
     p[0] = ASTInternalNode('struct_or_union', p[1:])
 
 
@@ -279,7 +293,7 @@ def p_enum_specifier(p):
     ''' enum_specifier : ENUM '{' enumerator_list '}'
                        | ENUM IDENTIFIER '{' enumerator_list '}'
                        | ENUM '{' enumerator_list ',' '}'
-                       | ENUM IDENTIFIER '{' enumerator_list, '}'
+                       | ENUM IDENTIFIER '{' enumerator_list ',' '}'
                        | ENUM IDENTIFIER '''
     p[0] = ASTInternalNode('enum_specifier', p[1:])
 
@@ -300,7 +314,9 @@ def p_enumerator(p):
 
 # 6.7.3
 def p_type_qualifier(p):
-    ''' type_qualifier : CONST | RESTRICT | VOLATILE '''
+    ''' type_qualifier : CONST
+                       | RESTRICT
+                       | VOLATILE '''
     p[0] = ASTInternalNode('type_qualifier', p[1:])
 
 
@@ -321,7 +337,7 @@ def p_statement(p):
 
 # 6.8.1
 def p_labeled_statement(p):
-    ''' labeled_statement : identifier ':' statement
+    ''' labeled_statement : IDENTIFIER ':' statement
                           | CASE constant_expression ':' statement
                           | DEFAULT ':' statement '''
     p[0] = ASTInternalNode('labeled_statement', p[1:])
@@ -377,7 +393,7 @@ def p_iteration_statement(p):
 
 # 6.8.6
 def p_jump_statement(p):
-    ''' jump_statement : GOTO identifier ';'
+    ''' jump_statement : GOTO IDENTIFIER ';'
                        | CONTINUE ';'
                        | BREAK ';'
                        | RETURN ';'
