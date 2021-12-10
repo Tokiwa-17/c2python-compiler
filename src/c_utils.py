@@ -1,6 +1,6 @@
 import os
 
-c_utils = [strlen_py, gets_py, printf_py, system_py]
+#c_utils = [strlen_py, gets_py, printf_py, system_py]
 
 # system in C
 system_py = '''

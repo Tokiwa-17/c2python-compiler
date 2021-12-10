@@ -83,6 +83,7 @@ integer = r'(0?%s+%s?|0[xX]%s+%s?|%s+%s%s?)' % (D, IS, H, IS, D, E, FS)
 decimal = r'((%s+\.%s*(%s)?%s?)|(%s*\.%s+(%s)?%s?))' % (D,
                                                         D, E, FS, D, D, E, FS)
 char = r'(\'(\\.|[^\\\'])+\')'
+identifier = r'(%s(%s|%s)*)' % (L, D, L)
 
 t_CONSTANT = r'(%s|%s|%s|%s)' % (decimal, integer, char, boolean)
 t_STRING_LITERAL = r'"(\\.|[^\\"])*"'
