@@ -9,7 +9,7 @@ class Interpreter:
         if self.src_file.split('.')[-1] != 'c':
             raise Exception('The type of source file is incorrect.')
         if self.dst_file.split('.')[-1] != 'py':
-            raise Exception('The type of destination file is incorrect.')
+            raise Exception('The type of destin`ation file is incorrect.')
 
         self.global_variables = []
         self.functions = []
