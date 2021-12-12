@@ -11,7 +11,7 @@ class Interpreter:
         if self.src_file.split('.')[-1] != 'c':
             raise Exception('The type of source file is incorrect.')
         if self.dst_file.split('.')[-1] != 'py':
-            raise Exception('The type of destination file is incorrect.')
+            raise Exception('The type of destin`ation file is incorrect.')
 
         self.global_variables = []
         self.functions = []
@@ -202,4 +202,114 @@ class Interpreter:
             pass
 
     def code_compose(self, tree, code_list, flag_ret):
+        # 前置 ++/--
+        if tree.key == 'unary_expression' and isinstance(tree.children[0], ASTLeafNode):
+            if tree.children[0].value == '++':
+                res = [code_list[1][0] + ' = ' + code_list[1][0] + '+1']
+                """
+                变量 += 1
+                """
+                return res
+            if tree.children[0].value == '--':
+                res = [code_list[1][0] + '=' + code_list[1][0] + '-1']
+                """
+                变量 -= 1
+                """
+                return res
+
+        # 后置 ++/--
+        elif tree.key == 'postfix_expression' and len(tree.children) == 2:
+            if tree.children[1].value == '++':
+                res = [code_list[0][0] + '=' + code_list[0][0] + '+1']
+                """
+                变量 += 1
+                """
+                return res
+            if tree.children[1].value == '--':
+                res = [code_list[0][0] + '=' + code_list[0][0] + '-1']
+                """
+                变量 -= 1
+                """
+                return res
+
+        # return 语句
+        elif tree.key == 'jump_statement' and tree.children[0].key == 'return':
+            if len(tree.children) == 2:
+                """
+                return
+                """
+                return ['return']
+            elif len(tree.children) == 3:
+                """
+                return 返回值
+                """
+                return [code_list[0][0] + ' ' + code_list[1][0]]
+
+        # 选择语句
+        elif tree.key == 'selection_statement':
+            if len(tree.children) == 5:
+                """
+                if 条件:
+                    代码块（缩进+1）
+                """
+                return ['if ' + code_list[2][0] + ':', code_list[4]]
+            if len(tree.children) == 7:
+                """
+                if 条件:
+                    代码块（缩进+1）
+                else:
+                    代码块（缩进+1）
+                """
+                return ['if ' + code_list[2][0] + ':', code_list[4], 'else:', code_list[6]]
+
+        # 循环语句
+        elif tree.key == 'iteration_statement':
+            #  while {
+            #      ...
+            #  }
+            if tree.children[0].value == 'while':
+                """
+                while 条件:
+                    代码块（缩进+1）
+                """
+                return ['while ' + code_list[2][0] + ':', code_list[4]]
+            #  for (...; ...; ...) {
+            #      ...
+            #  }
+            if len(tree.children) == 7:
+                """
+                初始条件
+                while 终止条件:
+                    代码块（缩进+1）
+                    迭代（缩进+1）
+                """
+                return [code_list[2][0], 'while ' + code_list[3][0] + ':', code_list[6], code_list[4]]
+
+        # 语句块的换行
+        elif tree.key == 'block_item_list':
+            lst = []
+            for code in code_list:
+                for c in code:
+                    lst.append(c)
+            """
+            语句1
+            语句2
+            ...
+            """
+            return lst
+
+        # {}作用域 去除{}
+        elif tree.key == 'compound_statement':
+            if len(tree.children) == 3:
+                """
+                    代码块（缩进+1）
+                """
+                return code_list[1]
+            # {}内为空，Python需要有 pass
+            elif len(tree.children) == 2:
+                """
+                    pass（缩进+1）
+                """
+                return ['pass']
+
         pass
