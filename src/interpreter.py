@@ -311,5 +311,105 @@ class Interpreter:
                     pass（缩进+1）
                 """
                 return ['pass']
+        
+
+        # 声明语句
+        if tree.key == 'declaration' or tree.key == 'struct_declaration':
+
+            # 变量（非结构体）声明，去除变量类型和分号
+            if len(tree.children) == 3 and flag_ret == '':
+                return code_list[1] # 返回变量名
+
+            # 结构体变量声明
+            elif len(tree.children) == 3 and flag_ret != '':
+                # flag_ret 为结构体名称
+                if flag_ret != code_list[0][0]:
+                    result = code_list[0]
+                else:
+                    result = []
+                for class_obj in code_list[1]:
+                    result.append(class_obj + '=' + flag_ret + '()')
+
+                # 结构体数组的处理
+                if len(result) == 1:
+                    tmp = result[0]
+                    if tmp.find('=') != tmp.rfind('='):
+                        tmp_2 = tmp.split('=')[2]
+                        tmp_2 = tmp_2.lstrip()
+                        tmp = tmp.split('=')[0] + '=' + tmp.split('=')[1]
+                        tmp = tmp[0:tmp.find('[') + 1] + tmp_2 + ' for i in range(' + tmp[tmp.find('*') + 1:] + ')]'
+                        tmp = tmp.rstrip()
+                        result = []
+                        result.append(tmp)
+                return result
+
+            elif len(tree.children) == 2:
+                return code_list[0]
+
+        # 数组的声明与定义，如：
+        # int s[10]; == > s = [0] * 10
+        # int s[5] = {1,2,3}; ==>  s = [1,2,3,0,0]
+        # char s[5] = "abc"; ==>  s = ['a','b','c',0,0]
+        elif tree.key == 'direct_declarator' and len(tree.children) == 4 and \
+                isinstance(tree.children[2], ASTInternalNode) and \
+                tree.children[2].key == 'assignment_expression':
+            return [code_list[0][0] + '=[' + 'None' + ']*' + code_list[2][0]] # 数组名 = [None] * 长度
+
+        elif tree.key == 'init_declarator' and len(tree.children) == 3 and code_list[0][0].find('[') >= 0:
+            tmp = code_list[0][0]  # s[0]*5
+            index_1 = tmp.find('[')
+            left = tmp[:index_1 - 1]  # s
+            length = code_list[0][0].split('*')[1]  # 5
+
+            # 字符数组 "..."初始化
+            if code_list[2][0].find('"') >= 0:
+                tmp = code_list[2][0].strip('"')  # "abc"
+                result = [left + '=[None]*' + length]
+                for i, c in enumerate(tmp):
+                    result.append(left + '[' + str(i) + ']="' + c + '"')
+                """
+                数组名 = [None] * 长度
+                数组名[0] = 初始值1 ("字符")
+                数组名[1] = 初始值2
+                ...
+                """
+                return result
+
+            # 其他类型的数组 {...}初始化
+            else:
+                tmp = code_list[2][0].split(',')
+                result = [left + '=[None]*' + length]
+                for i, c in enumerate(tmp):
+                    result.append(left + '[' + str(i) + ']=' + c)
+                """
+                数组名 = [None] * 长度
+                数组名[0] = 初始值1
+                数组名[1] = 初始值2
+                ...
+                """
+                return result
+
+        # 去除数组的[]
+        elif tree.key == 'initializer' and len(tree.children) == 3:
+            return code_list[1] # 返回[]中的值
+
+        # 其他情况
+        else:
+            lst = []
+            flag = True
+            for code in code_list:
+                if len(code) != 1:
+                    flag = False
+            if flag:
+                s = ''
+                for code in code_list:
+                    s += code[0]
+                lst.append(s)
+            else:
+                for code in code_list:
+                    lst.extend(code)
+            return lst
+
 
         pass
+    
