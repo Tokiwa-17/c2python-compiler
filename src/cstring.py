@@ -1,6 +1,6 @@
 # -*- coding=utf-8 -*-
 
-def strlen_0(s):
+def strlen(s):
     if isinstance(s, str):
         return len(s)
     else:

@@ -1,10 +1,10 @@
 # -*- coding=utf-8 -*-
 
-def printf_0(fmt: str, *args):
+def printf(fmt: str, *args):
     print(fmt % args, end='')
 
 
-def gets_0(s): # TODO
+def gets(s): # TODO
     s_in = input()
     for i, c in enumerate(s_in):
         s[i] = c
