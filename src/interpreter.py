@@ -203,7 +203,7 @@ class Interpreter:
             return
         for child in tree.children:
             if child.ttype == 'IDENTIFIER':
-                alias = child.value + '_'
+                alias = child.value
                 self.global_variables.append(alias)
                 self.variable_table[child.value] = [(alias, True)]
                 child.value = alias
