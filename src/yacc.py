@@ -5,6 +5,9 @@ import ply.yacc as yacc
 from lex import tokens, identifier
 from ast_ import *
 
+reserved_list = ['true', 'false']
+
+
 def p_translation_unit(p):
     ''' translation_unit : external_declaration
                          | translation_unit external_declaration '''
@@ -209,7 +212,7 @@ def p_struct_or_union_specifier(p):
                                   | struct_or_union '{' struct_declaration_list '}'
                                   | struct_or_union IDENTIFIER '''
     if not p[2] == '{' and not p[2] in reserved_list:
-        p[2] = ASTExternalNode('IDENTIFIER', p[2])
+        p[2] = ASTLeafNode('IDENTIFIER', p[2])
     p[0] = ASTInternalNode('struct_or_union_specifier', p[1:])
 
 # 6.7.2.1
@@ -257,6 +260,8 @@ def p_enum_specifier(p):
                         | ENUM '{' enumerator_list ',' '}'
                         | ENUM IDENTIFIER '{' enumerator_list ',' '}'
                         | ENUM IDENTIFIER '''
+    if not p[2] == '{' and not p[2] in reserved_list:
+        p[2] = ASTLeafNode('IDENTIFIER', p[2])
     p[0] = ASTInternalNode('enum_specifier', p[1:])
 
 # 6.7.2.2
@@ -269,6 +274,8 @@ def p_enumerator_list(p):
 def p_enumerator(p):
     ''' enumerator : IDENTIFIER
                    | IDENTIFIER '=' constant_expression '''
+    if not p[1] in reserved_list:
+        p[1] = ASTLeafNode('IDENTIFIER', p[1])
     p[0] = ASTInternalNode('enumerator', p[1:])
 
 # 6.7.3
@@ -305,6 +312,8 @@ def p_direct_declarator(p):
                         | direct_declarator '(' parameter_type_list ')'
                         | direct_declarator '(' identifier_list ')'
                         | direct_declarator '(' ')' '''
+    if len(p) == 2 and not p[1] in reserved_list:
+        p[1] = ASTLeafNode('IDENTIFIER', p[1])
     p[0] = ASTInternalNode('direct_declarator', p[1:])
 
 # 6.7.5
@@ -344,6 +353,10 @@ def p_parameter_declaration(p):
 def p_identifier_list(p):
     ''' identifier_list : IDENTIFIER
                         | identifier_list ',' IDENTIFIER '''
+    if len(p) == 2 and not p[1] in reserved_list:
+        p[1] = ASTLeafNode('IDENTIFIER', p[1])
+    elif len(p) == 4 and not p[3] in reserved_list:
+        p[3] = ASTLeafNode('IDENTIFIER', p[3])
     p[0] = ASTInternalNode('identifier_list', p[1:])
 
 # 6.7.6

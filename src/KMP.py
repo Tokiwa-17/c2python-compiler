@@ -7,6 +7,9 @@ pattern = [None] * 256
 next = [None] * 1024
 
 def main():
+    global text
+    global pattern
+    global next
     printf("Please enter the text:\n")
     gets(text)
     printf("\nPlease enter the pattern:\n")
@@ -30,6 +33,9 @@ def main():
     return 0
 
 def kmp(start):
+    global text
+    global pattern
+    global next
     pLen = strlen(pattern)
     tLen = strlen(text)
     i = start
@@ -46,6 +52,9 @@ def kmp(start):
         return -1
 
 def getNext():
+    global text
+    global pattern
+    global next
     pLen = strlen(pattern)
     next[0] = -1
     i = 0
