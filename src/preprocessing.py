@@ -1,3 +1,5 @@
+import os
+import re
 
 def remove_side_whitespace(str):
     str = str.strip(' ')
@@ -36,11 +38,15 @@ def precompile(filename):
         if line[0] == '#':
             type = line.split()[0]
             if type == '#define':
-                pass
-                # TODO:
+                define_list.append(line.split()[1])
+                define_list.append(line.split()[2])
             elif type == '#include':
-                pass
-                # TODO:
+                item = line.split()[1]
+                if item[0] == '<' and item[-1] == '>':
+                    pass
+                elif item[0] == '"' and item[-1] == '"':
+                    path = os.path.dirname(filename)
+                    include_list.append(os.path.join(path, item[1][1:-1]))
             else:
                 raise KeyError
 
@@ -53,9 +59,15 @@ def precompile(filename):
 
     code = '\n'.join(lines)
     # handle define
-    # TODO:
-
+    for macro in define_list:
+        code = re.sub(macro[0], macro[1], code)
+    code += '\n'
     # handle include
-    # TODO:
-
-    return True, code
+    static_code = ''
+    for include_file in include_list:
+        compile_result = precompile(include_file)
+        if compile_result[0]:
+            static_code += compile_result[1]
+        else:
+            return compile_result
+    return True, static_code + code
