@@ -1,19 +1,17 @@
 from cstdio import *
 from cstring import *
-text_ = [None] * 256
+text = [None] * 256
 
-text2_ = [None] * 5
-text2_[0] = 'a'
-text2_[1] = 'b'
-text2_[2] = 'c'
-
-a_ = 0
+text2 = [None] * 5
+text2[0] = 'a'
+text2[1] = 'b'
+text2[2] = 'c'
 
 def main():
-    global text_
-    global text2_
-    global a_
+    global text
+    global text2
     text[1] = '1'
+    A = test()
     return 0
 
 if __name__ == '__main__':

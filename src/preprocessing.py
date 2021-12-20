@@ -36,7 +36,7 @@ def precompile(filename):
         if line[0] == '#':
             type = line.split()[0]
             if type == '#define':
-                pass
+                define_list.append((line[1], words[2]))
                 # TODO:
             elif type == '#include':
                 pass
