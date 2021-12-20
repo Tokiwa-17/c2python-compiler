@@ -1,18 +1,15 @@
 from cstdio import *
 from cstring import *
-text_ = [None] * 256
+text2 = [None] * 5
+text2[0] = 'a'
+text2[1] = 'b'
+text2[2] = 'c'
 
-text2_ = [None] * 5
-text2_[0] = 'a'
-text2_[1] = 'b'
-text2_[2] = 'c'
-
-a_ = 0
+a = 0
 
 def main():
-    global text_
-    global text2_
-    global a_
+    global text2
+    global a
     text[1] = '1'
     return 0
 
