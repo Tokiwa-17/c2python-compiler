@@ -25,61 +25,12 @@ class Interpreter:
         self.import_c_utils.append('from cstring import *')
         self.run_cmd ='\n' + "if __name__ == '__main__':" + '\n' + '    ' + 'main()'
 
-    def format_code(self, s):
-        format_string = ''
-        i = 0
-        literals = ['=', '!', '>', '<', '+', '*', '/']
-        while i < len(s):
-            if s[i] in literals:
-                if s[i + 1] == '=':
-                    format_string += ' ' + s[i] + '=' + ' '
-                    i = i + 2
-                    continue
-                elif s[i + 1] != '=':
-                    format_string += ' ' + s[i] + ' '
-                    i = i + 1
-                    continue
-            elif s[i] == '-':
-                if s[i + 1] == '=':
-                    format_string += ' -= '
-                    i = i + 2
-                    continue
-                elif s[i + 1] != '=':
-                    if not s[i + 1].isdigit():
-                        format_string += ' - '
-                        i = i + 1
-                        continue
-                    else:
-                        format_string += s[i]
-                        i = i + 1
-                        continue
-            elif s[i] == "'" or s[i] == '"':
-                if s[i] == "'":
-                    tmp = s.find("'", i + 1, len(s))
-                else:
-                    tmp = s.find('"', i + 1, len(s))
-                format_string += s[i:tmp + 1]
-                i = tmp + 1
-                continue
-            elif s[i] == ',':
-                format_string += ', '
-                i = i + 1
-                continue
-            else:
-                format_string += s[i]
-                i = i + 1
-                continue
-        return format_string
-
     def formatting(self, item, rank=-1):
-        INDENT_STRING = '    '
         if type(item) == str:
-            item = self.format_code(item)
-            # 对于只声明不定义的变量需要补上=None
             if '(' not in item and ' ' not in item and '=' not in item and item != '' and item != 'break' \
                     and item != 'continue' and item != 'pass' and item != 'else:' and item != 'if' and item != 'return':
                 item += ' = None'
-            return INDENT_STRING * rank + item
+            return '    ' * rank + item
         if type(item) == list:
             lines = []
             for i in item:
@@ -236,12 +187,9 @@ class Interpreter:
                     self.name_replacement(child, is_declarator)
 
         else:
-            # 不是变量
             if tree.ttype != 'IDENTIFIER':
                 return
-            # 变量在变量表中
             if tree.value in self.variable_table.keys():
-                # 是声明
                 if is_declarator:
                     table = self.variable_table[tree.value]
                     # 不需要重命名
