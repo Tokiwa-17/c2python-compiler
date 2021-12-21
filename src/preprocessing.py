@@ -47,7 +47,7 @@ def precompile(filename):
                     pass
                 elif item[0] == '"' and item[-1] == '"':
                     path = os.path.dirname(filename)
-                    include_list.append(os.path.join(path, item[1][1:-1]))
+                    include_list.append(os.path.join(path, item[1:-1]))
             else:
                 raise KeyError
 

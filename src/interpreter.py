@@ -25,61 +25,12 @@ class Interpreter:
         self.import_c_utils.append('from cstring import *')
         self.run_cmd ='\n' + "if __name__ == '__main__':" + '\n' + '    ' + 'main()'
 
-    def format_code(self, s):
-        format_string = ''
-        i = 0
-        literals = ['=', '!', '>', '<', '+', '*', '/']
-        while i < len(s):
-            if s[i] in literals:
-                if s[i + 1] == '=':
-                    format_string += ' ' + s[i] + '=' + ' '
-                    i = i + 2
-                    continue
-                elif s[i + 1] != '=':
-                    format_string += ' ' + s[i] + ' '
-                    i = i + 1
-                    continue
-            elif s[i] == '-':
-                if s[i + 1] == '=':
-                    format_string += ' -= '
-                    i = i + 2
-                    continue
-                elif s[i + 1] != '=':
-                    if not s[i + 1].isdigit():
-                        format_string += ' - '
-                        i = i + 1
-                        continue
-                    else:
-                        format_string += s[i]
-                        i = i + 1
-                        continue
-            elif s[i] == "'" or s[i] == '"':
-                if s[i] == "'":
-                    tmp = s.find("'", i + 1, len(s))
-                else:
-                    tmp = s.find('"', i + 1, len(s))
-                format_string += s[i:tmp + 1]
-                i = tmp + 1
-                continue
-            elif s[i] == ',':
-                format_string += ', '
-                i = i + 1
-                continue
-            else:
-                format_string += s[i]
-                i = i + 1
-                continue
-        return format_string
-
     def formatting(self, item, rank=-1):
-        INDENT_STRING = '    '
         if type(item) == str:
-            item = self.format_code(item)
-            # 对于只声明不定义的变量需要补上=None
             if '(' not in item and ' ' not in item and '=' not in item and item != '' and item != 'break' \
                     and item != 'continue' and item != 'pass' and item != 'else:' and item != 'if' and item != 'return':
                 item += ' = None'
-            return INDENT_STRING * rank + item
+            return '    ' * rank + item
         if type(item) == list:
             lines = []
             for i in item:
@@ -108,6 +59,20 @@ class Interpreter:
         except Exception as e:
             print(str(e))
 
+    def function_declaration_judgement(self, tree):
+        for child in tree.children:
+            if isinstance(child, ASTLeafNode):
+                return False
+            elif child.ttype == 'direct_declarator':
+                if len(child.children) > 1 and isinstance(child.children[1], ASTLeafNode) and child.children[1].value == '(':
+                    return True
+                else:
+                    return False
+            else:
+                if self.function_declaration_judgement(child):
+                    return True
+        return False
+
     def process(self, tree):
         def get_def_dec(tree):
             if tree.ttype == 'function_definition':
@@ -127,7 +92,8 @@ class Interpreter:
         self.declarations = reversed(self.declarations)
         new_code = []
         for dec in self.declarations:
-            # TODO: function declaration
+            if self.function_declaration_judgement(dec):
+               continue
             self.extract_global_declaration(dec)
             code, _ = self.generate_code(dec, [], 'declaration')
             new_code.extend(code)
@@ -156,22 +122,18 @@ class Interpreter:
                 self.extract_global_declaration(child)
 
     def leaf_node_translation(self, tree):
-        if tree.value == ';':
-            return ['']
-        elif tree.value == '&&':
-            return [' and ']
-        elif tree.value == '||':
-            return [' or ']
-        elif tree.value == '!':
-            return [' not ']
-        elif tree.value == 'true':
-            return ['True']
-        elif tree.value == 'false':
-            return ['False']
-        elif tree.value == 'struct':
-            return ['class']
-        else:
-            return [tree.value]
+        match_token = {}
+        match_token['||'] = [' or ']
+        match_token['!'] = [' not ']
+        match_token['&&'] = [' and ']
+        match_token[';'] = ['']
+        match_token['struct'] = ['class']
+        try:
+            match = match_token[tree.value]
+        except:
+            match = []
+            match.append(tree.value)
+        return match
 
     def get_flag(self, tree, flag_list):
         if tree.ttype == 'struct_or_union_specifier':
@@ -225,12 +187,9 @@ class Interpreter:
                     self.name_replacement(child, is_declarator)
 
         else:
-            # 不是变量
             if tree.ttype != 'IDENTIFIER':
                 return
-            # 变量在变量表中
             if tree.value in self.variable_table.keys():
-                # 是声明
                 if is_declarator:
                     table = self.variable_table[tree.value]
                     # 不需要重命名
@@ -260,50 +219,30 @@ class Interpreter:
     def is_func_dec(self, dec):
         # whether a declaration is a function declaration
         for child in tree.children:
-            pass
+            if isinstance(child, ASTLeafNode):
+                return False
 
     def code_translation(self, tree, code_list, flag_ret):
-        # 前置 ++/--
-        if tree.ttype == 'unary_expression' and isinstance(tree.children[0], ASTLeafNode):
-            if tree.children[0].value == '++':
-                res = [code_list[1][0] + ' = ' + code_list[1][0] + '+1']
-                """
-                变量 += 1
-                """
-                return res
-            if tree.children[0].value == '--':
-                res = [code_list[1][0] + '=' + code_list[1][0] + '-1']
-                """
-                变量 -= 1
-                """
-                return res
-
-        # 后置 ++/--
-        elif tree.ttype == 'postfix_expression' and len(tree.children) == 2:
-            if tree.children[1].value == '++':
-                res = [code_list[0][0] + '=' + code_list[0][0] + '+1']
-                """
-                变量 += 1
-                """
-                return res
-            if tree.children[1].value == '--':
-                res = [code_list[0][0] + '=' + code_list[0][0] + '-1']
-                """
-                变量 -= 1
-                """
-                return res
+        # ++/--
+        if (tree.ttype == 'unary_expression' and isinstance(tree.children[0], ASTLeafNode))\
+                or (tree.ttype == 'postfix_expression' and len(tree.children) == 2):
+            if tree.ttype == 'unary_expression':
+                if tree.children[0].value == '++':
+                    res = [code_list[1][0] + ' = ' + code_list[1][0] + '+1']
+                elif tree.children[0].value == '--':
+                    res = [code_list[1][0] + '=' + code_list[1][0] + '-1']
+            else:
+                if tree.children[1].value == '++':
+                    res = [code_list[0][0] + '=' + code_list[0][0] + '+1']
+                elif tree.children[1].value == '--':
+                    res = [code_list[0][0] + '=' + code_list[0][0] + '-1']
+            return res
 
         # return 语句
         elif tree.ttype == 'jump_statement' and tree.children[0].ttype == 'return':
             if len(tree.children) == 2:
-                """
-                return
-                """
                 return ['return']
             elif len(tree.children) == 3:
-                """
-                return 返回值
-                """
                 return [code_list[0][0] + ' ' + code_list[1][0]]
 
         # 选择语句
