@@ -197,7 +197,7 @@ class Interpreter:
         except Exception as e:
             print(str(e))
         stack.pop()
-        return self.code_compose(tree, code_list, flag_ret), flag_ret
+        return self.code_translation(tree, code_list, flag_ret), flag_ret
 
     def name_replacement(self, tree, is_declarator=False):
         if isinstance(tree, ASTInternalNode):
@@ -262,7 +262,7 @@ class Interpreter:
         for child in tree.children:
             pass
 
-    def code_compose(self, tree, code_list, flag_ret):
+    def code_translation(self, tree, code_list, flag_ret):
         # 前置 ++/--
         if tree.ttype == 'unary_expression' and isinstance(tree.children[0], ASTLeafNode):
             if tree.children[0].value == '++':
@@ -546,6 +546,4 @@ class Interpreter:
                     lst.extend(code)
             return lst
 
-
-        pass
     
