@@ -20,117 +20,61 @@ class Interpreter:
         self.declarations = []
         self.variable_table = {}
 
-        # TODO import
         self.import_c_utils = []
         self.import_c_utils.append('from cstdio import *')
         self.import_c_utils.append('from cstring import *')
         self.run_cmd ='\n' + "if __name__ == '__main__':" + '\n' + '    ' + 'main()'
 
-    def lint(self, s):
-        sstr = ''
+    def format_code(self, s):
+        format_string = ''
         i = 0
+        literals = ['=', '!', '>', '<', '+', '*', '/']
         while i < len(s):
-            if s[i] == '=':
+            if s[i] in literals:
                 if s[i + 1] == '=':
-                    sstr += ' == '
+                    format_string += ' ' + s[i] + '=' + ' '
                     i = i + 2
                     continue
                 elif s[i + 1] != '=':
-                    sstr += ' = '
-                    i = i + 1
-                    continue
-            elif s[i] == '!':
-                if s[i + 1] == '=':
-                    sstr += ' != '
-                    i = i + 2
-                    continue
-                elif s[i + 1] != '=':
-                    sstr += '!'
-                    i = i + 1
-                    continue
-            elif s[i] == '>':
-                if s[i + 1] == '=':
-                    sstr += ' >= '
-                    i = i + 2
-                    continue
-                elif s[i + 1] != '=':
-                    sstr += ' > '
-                    i = i + 1
-                    continue
-            elif s[i] == '<':
-                if s[i + 1] == '=':
-                    sstr += ' <= '
-                    i = i + 2
-                    continue
-                elif s[i + 1] != '=':
-                    sstr += ' < '
-                    i = i + 1
-                    continue
-            elif s[i] == '+':
-                if s[i + 1] == '=':
-                    sstr += ' += '
-                    i = i + 2
-                    continue
-                elif s[i + 1] != '=':
-                    sstr += ' + '
-                    i = i + 1
-                    continue
-            elif s[i] == '*':
-                if s[i + 1] == '=':
-                    sstr += ' *= '
-                    i = i + 2
-                    continue
-                elif s[i + 1] != '=':
-                    sstr += ' * '
-                    i = i + 1
-                    continue
-            elif s[i] == '/':
-                if s[i + 1] == '=':
-                    sstr += ' /= '
-                    i = i + 2
-                    continue
-                elif s[i + 1] != '=':
-                    sstr += ' / '
+                    format_string += ' ' + s[i] + ' '
                     i = i + 1
                     continue
             elif s[i] == '-':
                 if s[i + 1] == '=':
-                    sstr += ' -= '
+                    format_string += ' -= '
                     i = i + 2
                     continue
                 elif s[i + 1] != '=':
                     if not s[i + 1].isdigit():
-                        sstr += ' - '
+                        format_string += ' - '
                         i = i + 1
                         continue
                     else:
-                        sstr += s[i]
+                        format_string += s[i]
                         i = i + 1
                         continue
-            elif s[i] == "'":
-                tmp = s.find("'", i + 1, len(s))
-                sstr += s[i:tmp + 1]
+            elif s[i] == "'" or s[i] == '"':
+                if s[i] == "'":
+                    tmp = s.find("'", i + 1, len(s))
+                else:
+                    tmp = s.find('"', i + 1, len(s))
+                format_string += s[i:tmp + 1]
                 i = tmp + 1
                 continue
             elif s[i] == ',':
-                sstr += ', '
+                format_string += ', '
                 i = i + 1
-                continue
-            elif s[i] == '"':
-                next = s.find('"', i + 1, len(s))
-                sstr += s[i:next + 1]
-                i = next + 1
                 continue
             else:
-                sstr += s[i]
+                format_string += s[i]
                 i = i + 1
                 continue
-        return sstr
+        return format_string
 
-    def formatIndent(self, item, rank=-1):
+    def formatting(self, item, rank=-1):
         INDENT_STRING = '    '
         if type(item) == str:
-            item = self.lint(item)
+            item = self.format_code(item)
             # 对于只声明不定义的变量需要补上=None
             if '(' not in item and ' ' not in item and '=' not in item and item != '' and item != 'break' \
                     and item != 'continue' and item != 'pass' and item != 'else:' and item != 'if' and item != 'return':
@@ -139,7 +83,7 @@ class Interpreter:
         if type(item) == list:
             lines = []
             for i in item:
-                lines.append(self.formatIndent(i, rank + 1))
+                lines.append(self.formatting(i, rank + 1))
             return '\n'.join(lines)
 
     def interpret(self):
@@ -150,10 +94,10 @@ class Interpreter:
                 return
             tree = parser.parse(src_code)
 
-            # TODO: semantic analysis
+            # semantic analysis
             raw_dst_code = self.process(tree)
-            # TODO: format
-            out = self.formatIndent(raw_dst_code)
+            # formatting
+            out = self.formatting(raw_dst_code)
             self.import_cmd = 'from cstdio import *' + '\n' + 'from cstring import *' + '\n'
             out = self.import_cmd + out
             dst_code = ''
