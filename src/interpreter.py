@@ -182,30 +182,18 @@ class Interpreter:
                     res = [code_list[0][0] + '=' + code_list[0][0] + '-1']
             return res
 
-        elif tree.ttype == 'jump_statement' and tree.children[0].ttype == 'return':
-            if len(tree.children) == 2:
-                return ['return']
-            elif len(tree.children) == 3:
-                return [code_list[0][0] + ' ' + code_list[1][0]]
+        elif tree.ttype == 'parameter_declaration' and len(tree.children) == 2:
+            return code_list[1]
 
-        elif tree.ttype == 'selection_statement':
-            if len(tree.children) == 5:
-                return ['if ' + code_list[2][0] + ':', code_list[4]]
-            if len(tree.children) == 7:
-                return ['if ' + code_list[2][0] + ':', code_list[4], 'else:', code_list[6]]
+        elif tree.ttype == 'direct_declarator' and len(tree.children) == 3 and tree.children[1].value == '[':
+            return [code_list[0][0]]
 
-        elif tree.ttype == 'iteration_statement':
-            if tree.children[0].value == 'while':
-                return ['while ' + code_list[2][0] + ':', code_list[4]]
-            if len(tree.children) == 7:
-                return [code_list[2][0], 'while ' + code_list[3][0] + ':', code_list[6], code_list[4]]
+        elif tree.ttype == 'struct_or_union_specifier' and len(tree.children) == 2:
+            return code_list[1]
 
-        elif tree.ttype == 'block_item_list':
-            lst = []
-            for code in code_list:
-                for c in code:
-                    lst.append(c)
-            return lst
+        elif tree.ttype == 'struct_or_union_specifier' and len(tree.children) == 5:
+            return [code_list[0][0] + ' ' + code_list[1][0] + ':',
+                    code_list[3]]
 
         elif tree.ttype == 'compound_statement':
             if len(tree.children) == 3:
@@ -225,11 +213,17 @@ class Interpreter:
                 return ['def ' + code_list[1][0] + ':',
                         function_body]
 
-        elif tree.ttype == 'parameter_declaration' and len(tree.children) == 2:
-            return code_list[1]
+        elif tree.ttype == 'jump_statement' and tree.children[0].ttype == 'return':
+            if len(tree.children) == 2:
+                return ['return']
+            elif len(tree.children) == 3:
+                return [code_list[0][0] + ' ' + code_list[1][0]]
 
-        elif tree.ttype == 'direct_declarator' and len(tree.children) == 3 and tree.children[1].value == '[':
-            return [code_list[0][0]]
+        elif tree.ttype == 'selection_statement':
+            if len(tree.children) == 5:
+                return ['if ' + code_list[2][0] + ':', code_list[4]]
+            if len(tree.children) == 7:
+                return ['if ' + code_list[2][0] + ':', code_list[4], 'else:', code_list[6]]
 
         elif tree.ttype == 'init_declarator_list':
             if len(tree.children) == 1:
@@ -238,12 +232,18 @@ class Interpreter:
                 return [code_list[0][0],
                         code_list[2][0]]
 
-        elif tree.ttype == 'struct_or_union_specifier' and len(tree.children) == 2:
-            return code_list[1]
+        elif tree.ttype == 'iteration_statement':
+            if tree.children[0].value == 'while':
+                return ['while ' + code_list[2][0] + ':', code_list[4]]
+            if len(tree.children) == 7:
+                return [code_list[2][0], 'while ' + code_list[3][0] + ':', code_list[6], code_list[4]]
 
-        elif tree.ttype == 'struct_or_union_specifier' and len(tree.children) == 5:
-            return [code_list[0][0] + ' ' + code_list[1][0] + ':',
-                    code_list[3]]
+        elif tree.ttype == 'block_item_list':
+            lst = []
+            for code in code_list:
+                for c in code:
+                    lst.append(c)
+            return lst
 
         elif tree.ttype == 'struct_declaration_list':
             lst = []
