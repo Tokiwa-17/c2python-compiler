@@ -1,5 +1,7 @@
 from cstdio import *
 from cstring import *
+test=111
+
 class foo:
     a=[None]*10
 a=foo()
@@ -12,6 +14,7 @@ class bar:
 c=[bar() for i in range(10)]
 
 def main():
+    global test
     global a
     global b
     global c

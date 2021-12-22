@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+#include "a.h"
 // 结构体定义 + 变量声明
 struct foo
 {
