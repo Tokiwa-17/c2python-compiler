@@ -13,10 +13,10 @@ int main()
     {
         if (s[i] != s[len - 1 - i])
         {
-            printf("Not a palindrome!");
+            printf("It is not a palindrome.");
             return 0;
         }
     }
-    printf("A palindrome!");
+    printf("It is a palindrome.");
     return 0;
 }

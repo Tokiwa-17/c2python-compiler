@@ -100,9 +100,6 @@ class Interpreter:
             new_code.append('')
 
         for function in self.functions:
-            table_copy = copy.deepcopy(self.variable_table)
-            self.name_replacement(function)
-            self.variable_table = table_copy
             code, flag = self.generate_code(function, [], 'function')
             new_code.extend(code)
             new_code.append('')
@@ -128,6 +125,8 @@ class Interpreter:
         match_token['&&'] = [' and ']
         match_token[';'] = ['']
         match_token['struct'] = ['class']
+        match_token['true'] = ['True']
+        match_token['false'] = ['False']
         try:
             match = match_token[tree.value]
         except:
@@ -135,94 +134,39 @@ class Interpreter:
             match.append(tree.value)
         return match
 
-    def get_flag(self, tree, flag_list):
+    def get_struct(self, tree, struct_list):
         if tree.ttype == 'struct_or_union_specifier':
             return tree.children[1].value
         else:
-            for flag in flag_list:
-                if flag != '':
-                    return flag
+            for struct in struct_list:
+                if struct != '':
+                    return struct
             return ''
 
     def generate_code(self, tree, stack, type):
-        code_list, flag_list = [], []
+        code_list, struct_list = [], []
         stack.append(tree.ttype)
         if isinstance(tree, ASTLeafNode):
             stack.pop()
             return self.leaf_node_translation(tree), ''
         for child in tree.children:
-            code, flag = self.generate_code(child, stack, type)
+            code, struct = self.generate_code(child, stack, type)
             code_list.append(code)
-            flag_list.append(flag)
+            struct_list.append(struct)
         try:
-            flag_ret = self.get_flag(tree, flag_list)
+            struct_ret = self.get_struct(tree, struct_list)
         except Exception as e:
             print(str(e))
         stack.pop()
-        return self.code_translation(tree, code_list, flag_ret), flag_ret
+        return self.code_translation(tree, code_list, struct_ret), struct_ret
 
-    def name_replacement(self, tree, is_declarator=False):
-        if isinstance(tree, ASTInternalNode):
-            if tree.ttype == 'declarator':
-                pass
-            elif tree.ttype == 'primary_expression':
-                for child in tree.children:
-                    self.name_replacement(child, False)
-            elif tree.ttype == 'struct_or_union_specifier':
-                return
-            elif tree.ttype == 'postfix_expression' and len(tree.children) == 3 \
-                and isinstance(tree.children[2], ASTLeafNode) and tree.children[2].ttype == 'IDENTIFIER':
-                for child in tree.children[:2]:
-                    self.name_replacement(child, False)
-                # 选择或循环语句，进入新一层作用域
-            elif tree.ttype == 'iteration_statement' or tree.ttype == 'selection_statement':
-                # 进入作用域，保存副本
-                table_copy = copy.deepcopy(self.variable_table)
-                for child in tree.children:
-                    self.name_replacement(child, is_declarator)
-                # 离开作用域，恢复变量表
-                self.variable_table = table_copy
-            else:
-                for child in tree.children:
-                    self.name_replacement(child, is_declarator)
-
-        else:
-            if tree.ttype != 'IDENTIFIER':
-                return
-            if tree.value in self.variable_table.keys():
-                if is_declarator:
-                    table = self.variable_table[tree.value]
-                    # 不需要重命名
-                    if len(table) == 0:
-                        alias = tree.value + '_'
-                        table.append((alias, False))
-                        tree.value = alias
-                    # 需要重命名并修改变量表
-                    else:
-                        alias = tree.value + '_' + str(len(table))
-                        table.append((alias, False))
-                        tree.value = alias
-                # 不是声明
-                else:
-                    table = self.variable_table[tree.value]
-                    # 需要重命名
-                    if len(table) != 0:
-                        last = table[-1][0]
-                        tree.value = last
-                    else:
-                        tree.value = tree.value + '_'
-            else:
-                alias = tree.value + '_'
-                self.variable_table[tree.value] = [(alias, False)]
-                tree.value = alias
-    
     def is_func_dec(self, dec):
         # whether a declaration is a function declaration
         for child in tree.children:
             if isinstance(child, ASTLeafNode):
                 return False
 
-    def code_translation(self, tree, code_list, flag_ret):
+    def code_translation(self, tree, code_list, struct_ret):
         # ++/--
         if (tree.ttype == 'unary_expression' and isinstance(tree.children[0], ASTLeafNode))\
                 or (tree.ttype == 'postfix_expression' and len(tree.children) == 2):
@@ -238,174 +182,86 @@ class Interpreter:
                     res = [code_list[0][0] + '=' + code_list[0][0] + '-1']
             return res
 
-        # return 语句
         elif tree.ttype == 'jump_statement' and tree.children[0].ttype == 'return':
             if len(tree.children) == 2:
                 return ['return']
             elif len(tree.children) == 3:
                 return [code_list[0][0] + ' ' + code_list[1][0]]
 
-        # 选择语句
         elif tree.ttype == 'selection_statement':
             if len(tree.children) == 5:
-                """
-                if 条件:
-                    代码块（缩进+1）
-                """
                 return ['if ' + code_list[2][0] + ':', code_list[4]]
             if len(tree.children) == 7:
-                """
-                if 条件:
-                    代码块（缩进+1）
-                else:
-                    代码块（缩进+1）
-                """
                 return ['if ' + code_list[2][0] + ':', code_list[4], 'else:', code_list[6]]
 
-        # 循环语句
         elif tree.ttype == 'iteration_statement':
-            #  while {
-            #      ...
-            #  }
             if tree.children[0].value == 'while':
-                """
-                while 条件:
-                    代码块（缩进+1）
-                """
                 return ['while ' + code_list[2][0] + ':', code_list[4]]
-            #  for (...; ...; ...) {
-            #      ...
-            #  }
             if len(tree.children) == 7:
-                """
-                初始条件
-                while 终止条件:
-                    代码块（缩进+1）
-                    迭代（缩进+1）
-                """
                 return [code_list[2][0], 'while ' + code_list[3][0] + ':', code_list[6], code_list[4]]
 
-        # 语句块的换行
         elif tree.ttype == 'block_item_list':
             lst = []
             for code in code_list:
                 for c in code:
                     lst.append(c)
-            """
-            语句1
-            语句2
-            ...
-            """
             return lst
 
-        # {}作用域 去除{}
         elif tree.ttype == 'compound_statement':
             if len(tree.children) == 3:
-                """
-                    代码块（缩进+1）
-                """
                 return code_list[1]
-            # {}内为空，Python需要有 pass
             elif len(tree.children) == 2:
-                """
-                    pass（缩进+1）
-                """
                 return ['pass']
 
-        # 函数声明, 返回值类型变为def,
         elif tree.ttype == 'function_definition':
             if len(tree.children) == 4:
                 pass
             elif len(tree.children) == 3:
                 function_body = []
-                # 无脑加入所有全局变量
                 for global_var in self.global_variables:
                     function_body.append('global ' + global_var)
                 for code in code_list[2]:
                     function_body.append(code)
-                """
-                def 函数名:
-                    函数体（缩进+1）
-                """
                 return ['def ' + code_list[1][0] + ':',
                         function_body]
 
-        # 函数参数列表中参数类型的去除
         elif tree.ttype == 'parameter_declaration' and len(tree.children) == 2:
-            """
-            变量（没有类型）
-            """
             return code_list[1]
 
-        # 函数列表中数组“[]”的去除
         elif tree.ttype == 'direct_declarator' and len(tree.children) == 3 and tree.children[1].value == '[':
-            """
-            数组变量名
-            """
             return [code_list[0][0]]
 
-        # 形如int x, y=2;的声明中的x, y=2 , Python中需要分行
         elif tree.ttype == 'init_declarator_list':
             if len(tree.children) == 1:
-                """
-                变量名（=初始值）
-                """
                 return code_list[0]
             else:
-                """
-                变量名1（=初始值1）
-                变量名2（=初始值2）
-                """
                 return [code_list[0][0],
                         code_list[2][0]]
 
-        # 结构体变量的声明（形如struct A a;)
         elif tree.ttype == 'struct_or_union_specifier' and len(tree.children) == 2:
-            """
-            结构体名称
-            """
             return code_list[1]
 
-        # 结构体的定义（形如 struct A { int x; int y; };
         elif tree.ttype == 'struct_or_union_specifier' and len(tree.children) == 5:
-            """
-            class 结构体名称:
-                成员变量（缩进+1）
-            """
             return [code_list[0][0] + ' ' + code_list[1][0] + ':',
                     code_list[3]]
 
-        # 结构体定义内的语句列表
         elif tree.ttype == 'struct_declaration_list':
             lst = []
             for code in code_list:
                 for c in code:
                     lst.append(c)
-            """
-            成员变量1 = 初始值1
-            成员变量2 = 初始值2
-            ...
-            """
             return lst
 
-        # 声明语句
         if tree.ttype == 'declaration' or tree.ttype == 'struct_declaration':
-
-            # 变量（非结构体）声明，去除变量类型和分号
-            if len(tree.children) == 3 and flag_ret == '':
+            if len(tree.children) == 3 and struct_ret == '':
                 return code_list[1] # 返回变量名
-
-            # 结构体变量声明
-            elif len(tree.children) == 3 and flag_ret != '':
-                # flag_ret 为结构体名称
-                if flag_ret != code_list[0][0]:
+            elif len(tree.children) == 3 and struct_ret != '':
+                if struct_ret != code_list[0][0]:
                     result = code_list[0]
                 else:
                     result = []
                 for class_obj in code_list[1]:
-                    result.append(class_obj + '=' + flag_ret + '()')
-
-                # 结构体数组的处理
+                    result.append(class_obj + '=' + struct_ret + '()')
                 if len(result) == 1:
                     tmp = result[0]
                     if tmp.find('=') != tmp.rfind('='):
@@ -421,10 +277,6 @@ class Interpreter:
             elif len(tree.children) == 2:
                 return code_list[0]
 
-        # 数组的声明与定义，如：
-        # int s[10]; == > s = [0] * 10
-        # int s[5] = {1,2,3}; ==>  s = [1,2,3,0,0]
-        # char s[5] = "abc"; ==>  s = ['a','b','c',0,0]
         elif tree.ttype == 'direct_declarator' and len(tree.children) == 4 and \
                 isinstance(tree.children[2], ASTInternalNode) and \
                 tree.children[2].ttype == 'assignment_expression':
@@ -436,39 +288,23 @@ class Interpreter:
             left = tmp[:index_1 - 1]  # s
             length = code_list[0][0].split('*')[1]  # 5
 
-            # 字符数组 "..."初始化
             if code_list[2][0].find('"') >= 0:
                 tmp = code_list[2][0].strip('"')  # "abc"
                 result = [left + '=[None]*' + length]
                 for i, c in enumerate(tmp):
                     result.append(left + '[' + str(i) + ']="' + c + '"')
-                """
-                数组名 = [None] * 长度
-                数组名[0] = 初始值1 ("字符")
-                数组名[1] = 初始值2
-                ...
-                """
                 return result
 
-            # 其他类型的数组 {...}初始化
             else:
                 tmp = code_list[2][0].split(',')
                 result = [left + '=[None]*' + length]
                 for i, c in enumerate(tmp):
                     result.append(left + '[' + str(i) + ']=' + c)
-                """
-                数组名 = [None] * 长度
-                数组名[0] = 初始值1
-                数组名[1] = 初始值2
-                ...
-                """
                 return result
 
-        # 去除数组的[]
         elif tree.ttype == 'initializer' and len(tree.children) == 3:
             return code_list[1] # 返回[]中的值
 
-        # 其他情况
         else:
             lst = []
             flag = True
